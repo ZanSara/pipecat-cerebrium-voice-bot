@@ -35,7 +35,6 @@ const status_text = {
 
 // Server URL (ensure trailing slash)
 let serverUrl = import.meta.env.VITE_SERVER_URL;
-let serverAuth = import.meta.env.VITE_SERVER_AUTH;
 if (serverUrl && !serverUrl.endsWith("/")) serverUrl += "/";
 
 // Auto room creation (requires server URL)
@@ -44,7 +43,7 @@ const autoRoomCreation = import.meta.env.VITE_MANUAL_ROOM_ENTRY ? false : true;
 // Query string for room URL
 const roomQs = new URLSearchParams(window.location.search).get("room_url");
 const checkRoomUrl = (url: string | null): boolean =>
-  !!(url && /^(https?:\/\/[^.]+\.daily\.co\/[^/]+)$/.test(url));
+  !!(url && /^(https?:\/\/[^.]+(\.staging)?\.daily\.co\/[^/]+)$/.test(url));
 
 // Show config options
 const showConfigOptions = import.meta.env.VITE_SHOW_CONFIG;
@@ -64,8 +63,6 @@ export default function App() {
   const [roomError, setRoomError] = useState<boolean>(
     (roomQs && checkRoomUrl(roomQs)) || false
   );
-  const [capacityError, setCapacityError] = useState<string>(""); // New state for start error
-
 
   function handleRoomUrl() {
     if ((autoRoomCreation && serverUrl) || checkRoomUrl(roomUrl)) {
@@ -87,34 +84,16 @@ export default function App() {
       setState("requesting_agent");
 
       try {
-        data = await fetch_start_agent(`${serverUrl}create_room`, serverAuth);
-        if (data && !data.error) {
-          fetch(`${serverUrl}start_bot`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${serverAuth}`
-            },
-            body: JSON.stringify({
-              room_url: data.result.url,
-              token: data.result.token
-            })
-          }).catch((e) => {
-            console.error(`Failed to make request to ${serverUrl}/main: ${e}`);
-          });
-        } else  {
-          setCapacityError("We are currently at capacity for this demo. Please try again later.")
-          setState("configuring")
-          return
-          // setError(data.detail.message);
-          // setState("error");
+        data = await fetch_start_agent(roomUrl, serverUrl);
+
+        if (data.error) {
+          setError(data.detail);
+          setState("error");
+          return;
         }
       } catch (e) {
-        console.log(e)
-        setCapacityError("We are currently at capacity for this demo. Please try again later.")
-        setState("configuring")
-        // setError(`Unable to connect to the bot server at '${serverUrl}'`);
-        // setState("error");
+        setError(`Unable to connect to the bot server at '${serverUrl}'`);
+        setState("error");
         return;
       }
     }
@@ -124,8 +103,8 @@ export default function App() {
 
     try {
       await daily.join({
-        url: data.result.url || roomUrl,
-        token: data.result.token || "",
+        url: data?.room_url || roomUrl,
+        token: data?.token || "",
         videoSource: false,
         startAudioOff: startAudioOff,
       });
@@ -192,11 +171,6 @@ export default function App() {
             {status_text[state as keyof typeof status_text]}
           </Button>
         </CardFooter>
-        {capacityError && (
-          <div className="text-red-500 mt-2 p-4">
-            {capacityError}<br/> Alternatively you can create your own. Click <strong><u><a href="https://docs.cerebrium.ai/v4/examples/realtime-voice-agents">here</a></u></strong> to see how
-          </div>
-        )}
       </Card>
     );
   }
