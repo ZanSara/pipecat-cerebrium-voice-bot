@@ -42,21 +42,21 @@ deepgram_voice: str = "aura-asteria-en"
 login(token=get_secret("HF_TOKEN"))
 
 
-# Run vllM Server in background process
-def start_server():
-    while True:
-        process = subprocess.Popen(
-            f"python -m vllm.entrypoints.openai.api_server --port 5000 --model NousResearch/Meta-Llama-3-8B-Instruct --dtype bfloat16 --api-key {get_secret('HF_TOKEN')}",
-            shell=True,
-        )
-        process.wait()  # Wait for the process to complete
-        logger.error("Server process ended unexpectedly. Restarting in 5 seconds...")
-        time.sleep(7)  # Wait before restarting
+# # Run vllM Server in background process
+# def start_server():
+#     while True:
+#         process = subprocess.Popen(
+#             f"python -m vllm.entrypoints.openai.api_server --port 5000 --model NousResearch/Meta-Llama-3-8B-Instruct --dtype bfloat16 --api-key {get_secret('HF_TOKEN')}",
+#             shell=True,
+#         )
+#         process.wait()  # Wait for the process to complete
+#         logger.error("Server process ended unexpectedly. Restarting in 5 seconds...")
+#         time.sleep(7)  # Wait before restarting
 
 
-# Start the server in a separate process
-server_process = Process(target=start_server, daemon=True)
-server_process.start()
+# # Start the server in a separate process
+# server_process = Process(target=start_server, daemon=True)
+# server_process.start()
 
 
 async def main(room_url: str, token: str):
@@ -87,10 +87,12 @@ async def main(room_url: str, token: str):
         )
 
         llm = OpenAILLMService(
-            name="LLM",
-            api_key=get_secret("HF_TOKEN"),
-            model="NousResearch/Meta-Llama-3-8B-Instruct",
-            base_url="http://127.0.0.1:5000/v1",
+            api_key=get_secret("OPENAI_API_KEY"),
+            model="gpt-4o-mini"
+            # name="LLM",
+            # api_key=get_secret("HF_TOKEN"),
+            # model="NousResearch/Meta-Llama-3-8B-Instruct",
+            # base_url="http://127.0.0.1:5000/v1",
         )
 
         messages = [
@@ -180,41 +182,41 @@ async def check_deepgram_model_status():
     return False
 
 
-async def check_vllm_model_status():
-    url = "http://127.0.0.1:5000/v1/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {get_secret('HF_TOKEN')}",
-    }
-    data = {
-        "model": "NousResearch/Meta-Llama-3-8B-Instruct",
-        "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello, are you working?"},
-        ],
-    }
-    max_retries = 5
-    async with aiohttp.ClientSession() as session:
-        for _ in range(max_retries):
-            print("Trying vLLM local server")
-            try:
-                async with session.post(url, headers=headers, json=data) as response:
-                    if response.status == 200:
-                        print("vLLM server is ready and responding correctly")
-                        return True
-                    else:
-                        print(f"Unexpected status code: {response.status}")
-                        response_text = await response.text()
-                        print(f"Response: {response_text}")
-            except aiohttp.ClientConnectionError:
-                print("vLLM Connection refused, retrying...")
-            await asyncio.sleep(10)
-    print("Failed to connect to vLLM server after multiple attempts")
-    return False
+# async def check_vllm_model_status():
+#     url = "http://127.0.0.1:5000/v1/chat/completions"
+#     headers = {
+#         "Content-Type": "application/json",
+#         "Authorization": f"Bearer {get_secret('HF_TOKEN')}",
+#     }
+#     data = {
+#         "model": "NousResearch/Meta-Llama-3-8B-Instruct",
+#         "messages": [
+#             {"role": "system", "content": "You are a helpful assistant."},
+#             {"role": "user", "content": "Hello, are you working?"},
+#         ],
+#     }
+#     max_retries = 5
+#     async with aiohttp.ClientSession() as session:
+#         for _ in range(max_retries):
+#             print("Trying vLLM local server")
+#             try:
+#                 async with session.post(url, headers=headers, json=data) as response:
+#                     if response.status == 200:
+#                         print("vLLM server is ready and responding correctly")
+#                         return True
+#                     else:
+#                         print(f"Unexpected status code: {response.status}")
+#                         response_text = await response.text()
+#                         print(f"Response: {response_text}")
+#             except aiohttp.ClientConnectionError:
+#                 print("vLLM Connection refused, retrying...")
+#             await asyncio.sleep(10)
+#     print("Failed to connect to vLLM server after multiple attempts")
+#     return False
 
 
 async def start_bot(room_url: str, token: str = None):
-    await check_vllm_model_status()
+    # await check_vllm_model_status()
     await check_deepgram_model_status()
 
     try:
