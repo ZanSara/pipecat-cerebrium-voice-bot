@@ -37,6 +37,9 @@ const status_text = {
 let serverUrl = import.meta.env.VITE_SERVER_URL;
 if (serverUrl && !serverUrl.endsWith("/")) serverUrl += "/";
 
+// Token
+const token = import.meta.env.VITE_SERVER_AUTH;
+
 // Auto room creation (requires server URL)
 const autoRoomCreation = import.meta.env.VITE_MANUAL_ROOM_ENTRY ? false : true;
 
@@ -84,7 +87,7 @@ export default function App() {
       setState("requesting_agent");
 
       try {
-        data = await fetch_start_agent(roomUrl, serverUrl);
+        data = await fetch_start_agent(serverUrl, token);
 
         if (data.error) {
           setError(data.detail);
@@ -103,8 +106,8 @@ export default function App() {
 
     try {
       await daily.join({
-        url: data?.room_url || roomUrl,
-        token: data?.token || "",
+        url: data?.result?.room_url || roomUrl,
+        token: data?.result?.token || "",
         videoSource: false,
         startAudioOff: startAudioOff,
       });

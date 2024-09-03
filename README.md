@@ -1,5 +1,7 @@
 # pipecat-cerebrium-voice-bot
 
+Heavily inspired from https://docs.cerebrium.ai/v4/examples/realtime-voice-agents
+
 ## Prerequisites:
 
 You will need:
@@ -20,4 +22,15 @@ Then clone the repo, or open it up in Codespaces, and run the following commands
 
 ```
 !pip install --upgrade cerebrium
+```
+
+
+## Notes
+
+.env.development.local should include the following:
+
+```
+VITE_APP_TITLE="My voice bot"
+VITE_SERVER_URL=https://api.cortex.cerebrium.ai/v4/p-d46ba6ea/voice-bot/create_room
+VITE_SERVER_AUTH= the JWT
 ```

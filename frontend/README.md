@@ -11,7 +11,7 @@ Install deps and build the UI:
 mv env.example .env.development.local
 yarn 
 yarn run build
-
+yarn dev
 ```
 
 Navigate to https://localhost:5173
